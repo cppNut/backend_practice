@@ -69,8 +69,11 @@ userSchema.pre("save", async function (next){
 
     if(!this.isModified("password")) return next();
 
-    this.password=bcrypt.hash(this.password,10)
+    this.password= await bcrypt.hash(this.password,10)
     next()
+
+    // next() here is basically telling mongoose  I am done with my logic, you can now move to the next middleware in line or finally save the data to the database.
+
 })
 
 // checking if the password that user sent is matching with the hashed password
@@ -81,8 +84,8 @@ userSchema.methods.isPasswordCorrect = async function
 }
 
 userSchema.methods.generateAccessToken=function(){
-    
-    jwt.sign(
+
+    return jwt.sign(
         {
             _id: this._id,
             email:this.email,
@@ -98,7 +101,7 @@ userSchema.methods.generateAccessToken=function(){
 
 userSchema.methods.generateRefreshToken=function(){
     
-    jwt.sign(
+    return jwt.sign(
         {
             _id: this._id,
         },
