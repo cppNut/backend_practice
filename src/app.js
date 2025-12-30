@@ -16,4 +16,12 @@ app.use(express.urlencoded({extended: true, limit: "16kb"}))    //url me kahi pr
 app.use(express.static("public"))   // files, assets public me 
 app.use(cookieParser())
 
+// routes import
+import userRouter from './routes/user.routes.js'
+
+
+// routes declaration
+app.use("/api/v1/users", userRouter)
+
+
 export {app}
