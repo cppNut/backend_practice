@@ -18,6 +18,7 @@ import fs from "fs"     // nodejs file system
             })
             //file has been uploaded successfully
             console.log("File has been uploaded on cloudinary ", response)
+            fs.unlinkSync(localFilePath)
             return response;
 
         }catch(error){

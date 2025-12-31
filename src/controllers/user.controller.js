@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import {User} from "../models/user.model.js"
 import {uploadeOnCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
+import fs from "fs"
 
 const registerUser = asyncHandler( async(req ,res) =>{
     // get user details from frontend
@@ -40,21 +41,29 @@ const registerUser = asyncHandler( async(req ,res) =>{
             throw new ApiError(400,"All fields are required")
         }
 
-    // step 5 -> checking if user already exists or not 
-
-    const existedUser = User.findOne({
-        $or:[{username} , {email}]      // checking for username / email if we find anything related to that user 
-    })
-
-    if(existedUser){
-        throw new ApiError(409, "User with email or username already exists")
-    }
-
     // step 6 -> checking for images 
     // middleware ne body me aur fileds add kr di hai 
 
     const avatarLocalPath = req.files?.avatar[0]?.path      // [0] means the first property
-    const coverImageLocalPath=req.files?.coverImage[0]?.path
+    //const coverImageLocalPath=req.files?.coverImage[0]?.path
+
+    let coverImageLocalPath;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
+        coverImageLocalPath=req.files.coverImage[0].path
+    }
+
+    // step 5 -> checking if user already exists or not 
+
+    const existedUser = await User.findOne({
+        $or:[{username} , {email}]      // checking for username / email if we find anything related to that user 
+    })
+
+    if(existedUser){
+        if (avatarLocalPath) fs.unlinkSync(avatarLocalPath);
+        if (coverImageLocalPath) fs.unlinkSync(coverImageLocalPath);
+
+        throw new ApiError(409, "User with email or username already exists")
+    }
 
     if(!avatarLocalPath){
         throw new ApiError(400,"Avatar file is required")
