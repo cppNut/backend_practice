@@ -1,9 +1,12 @@
 import { Router } from "express";
-import { registerUser } from "../controllers/user.controller.js";
+import { loginUser, logoutUser, registerUser } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router=Router()
 
+// route for register , first addede multer middleware then registerUser function 
+// register user se pehle we have used the multer middle ware (upload.fileds wala )
 router.route("/register").post(
     upload.fields([
         {
@@ -18,6 +21,15 @@ router.route("/register").post(
     registerUser
 )
 
-// register user se pehle we have used the multer middle ware (upload.fileds wala )
+router.routes("/login").post(
+
+    loginUser
+)
+
+
+// secured routes
+
+router.routes("/logout").post(verifyJWT, logoutUser)
+
 
 export default router
