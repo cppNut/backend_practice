@@ -5,6 +5,7 @@ import {uploadeOnCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
 import fs from "fs"
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshTokens = async(userId) => {
     
@@ -294,7 +295,7 @@ const getCurrentUser = asyncHandler(async(req,res)=>{
 
 })
 
-const updateAccountDetailed = asyncHandler(async(req,res)=>{
+const updateAccountDetails = asyncHandler(async(req,res)=>{
     
     const {fullname,email} = req.body
 
@@ -449,14 +450,65 @@ const getUserChannelProfile = asyncHandler(async(req,res)=>{
 
 })
 
+const getWatchHistory = asyncHandler(async(req,res)=>{
+    const user = await User.aggregate([
+        {
+            $match:{
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },//step 1
+        {
+            $lookup:{
+                from: "videos",
+                localField:"watchHistory",
+                foreignField:"_id",
+                as:"watchHistory",
+                pipeline:[
+                    {
+                        $lookup:{
+                            from:"users",
+                            localField:"owner",
+                            foreignField:"_id",
+                            as:"owner",
+                            pipeline:[
+                                {
+                                    $project:{
+                                        fullname:1,
+                                        username:1,
+                                        avatar:1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields:{
+                            owner:{
+                                $first:"$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }//step 2
+    ])
+
+    return res.status(200)
+    .json(
+        new ApiResponse(200,user[0].watchHistory,"Watch history fetched")
+    )
+
+})
+
 export {registerUser
     ,loginUser
     ,logoutUser
     ,refreshAccessToken
     ,changeCurrentPassword
     ,getCurrentUser
-    ,updateAccountDetailed
+    ,updateAccountDetails
     ,updateUserAvatar
     ,updateUserCoverImage
     ,getUserChannelProfile
+    ,getWatchHistory
 }
